@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>שיחה עם יונתן – סימולציה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* palette: #A4DCD4 with lighter and darker tints of the same hue */
+  --t50:#f4fbfa; --t100:#e6f5f2; --t200:#c9ebe6; --t300:#A4DCD4; --t400:#7cc6bb;
+  --t600:#3f8d82; --t700:#2b6b62; --t800:#1d4a44; --t900:#142f2c;
+  --bg:var(--t50); --card:#ffffff; --ink:var(--t900); --muted:var(--t700); --line:var(--t200);
+  --accent:var(--t700); --accent-ink:#ffffff; --them:var(--t100);
+  --c-bit:var(--t100); --c-kes:var(--t200); --c-mes:var(--t300); --c-taf:var(--t400);
+  --good:var(--t700); --warn:var(--t800);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"Assistant",Arial,sans-serif;font-size:17px;line-height:1.6}
+.wrap{max-width:680px;margin:0 auto;padding:20px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 20px;margin-bottom:14px}
+h1{font-size:26px;margin:0 0 4px;line-height:1.3}
+h2{font-size:19px;margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 14px}
+a{color:var(--accent)}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:13px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.opt{display:block;width:100%;text-align:right;background:#ffffff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin:9px 0 0;font:inherit;cursor:pointer;color:var(--ink)}
+.opt:hover{border-color:var(--t600);background:var(--t50)}
+.progress{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px;margin-bottom:10px}
+.bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.bar>div{height:100%;background:var(--t300);transition:width .3s}
+.scene p{margin:0 0 10px}
+.act{color:var(--muted);font-style:italic}
+.bubble{border-radius:12px;padding:12px 15px;margin:0 0 4px;background:var(--them)}
+.who{font-size:13px;font-weight:700;color:var(--muted);display:block;margin-bottom:2px}
+.q{font-weight:700;margin:14px 0 2px}
+.note{font-size:14px;color:var(--muted);background:var(--t50);border-radius:8px;padding:10px 12px;margin-top:14px}
+.goals{margin:6px 0 16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border-radius:20px;padding:3px 12px;font-size:14px;font-weight:600}
+.c1{background:var(--c-bit)}.c2{background:var(--c-kes)}.c3{background:var(--c-mes)}.c4{background:var(--c-taf)}
+.fb{padding:18px 18px 14px}
+.fbhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
+.fbhead h2{margin:0;font-size:20px}
+.namefield{display:flex;gap:8px;align-items:center;font-size:15px}
+.namefield input{font:inherit;font-size:15px;border:1px solid var(--line);border-radius:8px;padding:5px 9px;width:170px}
+.ending{background:var(--t50);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:15px}
+.ending b{display:block}
+.fb h3{font-size:16px;margin:12px 0 4px}
+.fb ul{margin:0;padding:0 18px 0 0}
+.fb li{margin:4px 0;font-size:15px;line-height:1.5}
+.fb .good h3{color:var(--good)}
+.fb .next h3{color:var(--warn)}
+.dn{font-weight:700}
+.ref{font-size:13px;color:var(--muted);white-space:nowrap}
+.fbfoot{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:12px;padding-top:8px}
+.shot{font-size:14px;text-align:center;color:var(--muted);margin:6px 0 12px}
+.fade{animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (max-width:480px){body{font-size:16px}.card{padding:18px 15px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const DOC_URL = "https://docs.google.com/document/d/1VbwBppIMhEuIs18sehBU7BC9ANzPpME9CQY09t1JR2A/edit?usp=sharing";
+
+// d = change in Yonatan's openness: +1 recommended, 0 partial, -1 harmful
+// intro: text shown before the choice ("all" or by openness level: hi / mid / lo)
+// who: label for the reaction bubble
+const SCENES = [
+ {
+  who:`אלה`,
+  intro:{all:`יום חמישי, 17:30. אלה, ראש הצוות של יונתן, נכנסת לחדר שלך וסוגרת את הדלת אחריה. "אני לא רוצה להלשין, אבל זה כבר הדדליין השני. ביום שני יש הצגה ללקוח, וחצי מהחומרים אצלו. אני משלימה בשבילו בלילות, ושניים מהצוות כבר שאלו אותי מה קורה איתו." *היא נראית עייפה.*`},
+  q:`מה את עונה לאלה?`,
+  opts:[
+   {d:0, t:`"תודה שאת משלימה. בואי ניתן לו עוד כמה ימים להתאקלם, זה טבעי אחרי חמישה חודשים. אם זה ימשיך, נחשוב יחד מה עושים."`,
+    r:`*אלה מהנהנת, אבל לא נראית מרוצה. ביום שני, בהצגה ללקוח, חסרים שני שקפים, ויונתן מתנצל מול כולם בקול חלש.*`,
+    note:`דחית את הפנייה ליונתן. ככל שמחכים, הקשיים מצטברים והוא נשאר איתם לבד.`, ref:`קשר ← יוזמה`},
+   {d:1, t:`"תודה שסיפרת. אני אדבר איתו בעצמי השבוע. בינתיים ספרי לי מה חסר להצגה, ונסגור את זה בלי שתעבדי בלילות."`,
+    r:`*אלה נושמת לרווחה. "תודה. ממש הייתי צריכה לשמוע את זה." היא מוציאה את הרשימה של מה שחסר.*`,
+    note:`יזמת שיחה בעצמך, בלי להעביר את האחריות לאחרים, ודאגת לחלוקת עומס הוגנת.`, ref:`קשר ← יוזמה · קשר ← צוות`},
+   {d:-1, t:`"אולי תנסי לדבר איתו את? כראש צוות זה פחות מאיים מלהיות מוזמן אליי. תעדכני אותי מה עלה, ונחליט אם צריך יותר."`,
+    r:`*אלה מהססת: "אני אנסה..." למחרת היא שואלת את יונתן במטבחון "מה קורה איתך?". הוא עונה "הכול טוב" וחוזר לעמדה.*`,
+    note:`העברת את השיחה לאלה, שכבר עמוסה ומתוסכלת. שיחה כזו היא באחריות המנהלת.`, ref:`קשר ← יוזמה · ביטחון ← פרטיות`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{all:`את מחליטה לשוחח עם יונתן בעצמך. היום יש לך ישיבת הנהלה עד 13:00, ומחר את מחוץ למשרד כל היום. יונתן יושב באופן-ספייס, צמוד לעמדות של שאר הצוות, עם אוזניות. ביומן שלו מסומן "עבודה על ההצגה" עד הערב.`},
+  q:`איך ומתי את מזמינה אותו לשיחה?`,
+  opts:[
+   {d:-1, t:`הודעה בסלאק: "יונתן, יש לך חצי שעה היום אחרי 14:00? רציתי שנשב קצת, זה לא ייקח הרבה זמן."`,
+    r:`*רבע שעה אין תשובה. אז: "בטח. קרה משהו?" כשהוא נכנס בשתיים, הוא חיוור והלפטופ צמוד לחזה.*`,
+    note:`הזמנה בלי נושא משאירה מקום לחרדה. כדאי לומר מראש על מה תדברו.`, ref:`קשר ← הכנה`},
+   {d:0, t:`אחרי ישיבת ההנהלה את ניגשת לעמדה שלו: "יונתן, אפשר לגנוב אותך לכמה דקות? רציתי לשמוע איך אתה מסתדר."`,
+    r:`*יונתן מוריד את האוזניות ומעיף מבט לעמדות הסמוכות. "אה... בטח." שני ראשים מתרוממים מהמסכים כשהוא הולך אחרייך.*`,
+    note:`ההזמנה הייתה ליד הצוות ובלי זמן להתכונן.`, ref:`קשר ← הכנה · ביטחון ← פרטיות`},
+   {d:1, t:`הודעה אישית: "אשמח שנשב היום חצי שעה, לשמוע איך אתה מתאקלם ולתכנן יחד את השבועות הקרובים. 14:30 או 16:00?"`,
+    r:`*אחרי כמה דקות: "16:00 מתאים. תודה." בארבע בדיוק הוא דופק על הדלת, עם כוס קפה ביד.*`,
+    note:`הזמנת מראש, בפרטיות, עם נושא ברור ואפשרות לבחור שעה.`, ref:`קשר ← הכנה · מסוגלות ← שליטה`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{
+   hi:`*יונתן מתיישב. עיגולים כהים מתחת לעיניים, אבל הוא מחייך חיוך קטן.* על השולחן שלך מונח תדפיס של הבריף שבוצע אחרת, והטלפון שלך רוטט: הסמנכ"לית שואלת "מה קורה עם ההצגה של יום שני?"`,
+   mid:`*יונתן מתיישב על קצה הכיסא, הטלפון ביד. עיגולים כהים מתחת לעיניים.* על השולחן שלך מונח תדפיס של הבריף שבוצע אחרת, והטלפון שלך רוטט: הסמנכ"לית שואלת "מה קורה עם ההצגה של יום שני?"`,
+   lo:`*יונתן נשאר רגע בפתח, ואז מתיישב על קצה הכיסא. ידיים משולבות, מבט לרצפה.* על השולחן שלך מונח תדפיס של הבריף שבוצע אחרת, והטלפון שלך רוטט: הסמנכ"לית שואלת "מה קורה עם ההצגה של יום שני?"`},
+  q:`איך את פותחת את השיחה?`,
+  opts:[
+   {d:-1, t:`"כיף שחזרת, באמת חסרת פה. איך היה שם? אני מניחה שעברתם דברים לא פשוטים בחודשים האלה."`,
+    r:`*יונתן מושך בכתפיים. "היה... מה שהיה. עדיף לא להיכנס." הוא מסתכל על הטלפון.*`,
+    note:`הזמנת אותו לספר על מה שעבר שם. אין צורך לחקור את מה שקרה.`, ref:`ביטחון ← עדינות`},
+   {d:1, t:`*את הופכת את הטלפון על השולחן.* "טוב שחזרת. לפני שנדבר על עבודה, איך אתה מתאקלם?"`,
+    r:`*יונתן מניח את הכוס. "האמת? מוזר. הכול נראה אותו דבר, ואני קצת לא."*`,
+    note:`שמת בצד את הלחץ שלך ופתחת בחזרה שלו, ברוגע.`, ref:`קשר ← ויסות · ביטחון ← הרגעה`},
+   {d:-1, t:`"טוב שחזרת. אני רוצה שנעבור יחד על מה שקרה עם הבריף, כדי להבין איפה זה נפל ושזה לא יחזור."`,
+    r:`*יונתן מזדקף. "כן, אני יודע. זה עליי. אני אסדר את זה." הוא נשמע כמו מי שרוצה לסיים את השיחה מהר.*`,
+    note:`פתחת בביצועים, תחת הלחץ של ההודעה מהסמנכ"לית. קודם יוצרים קשר, ורק אחר כך מדברים על ציפיות.`, ref:`קשר ← ויסות · קשר ← הקשבה`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{
+   hi:`"...אני יושב בישיבה על צבעים של אריזה, ובראש שלי אני עדיין שם. החבר'ה עוד שם. ונדב מהפלוגה עדיין בשיקום." *הוא מסובב את כוס הקפה בין הידיים.*`,
+   mid:`"אני בסדר. רק צריך להתאפס. החבר'ה עוד שם, אז..." *הוא לא מסיים את המשפט.*`,
+   lo:`"אני בסדר, באמת. זה סתם עומס." *הוא מציץ בטלפון.*`},
+  q:`מה את אומרת לו?`,
+  opts:[
+   {d:-1, t:`"אני יכולה רק לדמיין. תשמע, פה אתה לפחות בטוח. אולי תנסה להשאיר את זה בחוץ כשאתה במשרד?"`,
+    r:`*יונתן מהנהן לאט. "כן. אני אנסה." משהו בפנים שלו נסגר.*`,
+    note:`ההצעה "להשאיר את זה בחוץ" מקטינה את הקושי במקום לתת לו תוקף.`, ref:`קשר ← לגיטימציה`},
+   {d:1, t:`"נשמע שחלק ממך עוד שם, וזה הגיוני אחרי חמישה חודשים. לא צריך לספר לי יותר ממה שנוח לך."`,
+    r:`*יונתן נושף. "כן. בדיוק. תודה שאת לא אומרת לי לשכוח מזה."*`,
+    note:`נתת תוקף לקושי, ואמרת במפורש שאין צורך לפרט.`, ref:`קשר ← לגיטימציה · ביטחון ← עדינות`},
+   {d:0, t:`"מי עוד נשאר שם? אתם בקשר? ספר לי קצת מה קורה איתם ואיך הם מסתדרים עכשיו."`,
+    r:`*יונתן מתחיל לספר, נעצר באמצע משפט ומשפשף את הפנים. "סליחה. לא משנה."*`,
+    note:`השאלה על החברים משכה אותו חזרה לשם. עדיף לשקף את מה שאמר ולא לחקור.`, ref:`ביטחון ← עדינות · קשר ← הקשבה`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{all:`עברו עשרים דקות. ההצגה ללקוח ביום שני, והסמנכ"לית עדיין מחכה לתשובה. הגיע הזמן לדבר גם על העבודה: הקמפיין שהתעכב, הבריף שבוצע אחרת, הריחוף בישיבות.`},
+  q:`איך את מעלה את נושא הביצועים?`,
+  opts:[
+   {d:0, t:`"את ההצגה של יום שני אלה ונועה יסגרו, אז אל תדאג לדדליינים כרגע. קח את הזמן שאתה צריך."`,
+    r:`*יונתן מחייך בהקלה, ואז מקמט את המצח. "אבל... עד מתי? וקמפיין החורף? זה הפרויקט שלי."*`,
+    note:`"קח את הזמן" בלי תוכנית משאיר אותו בלי ודאות ובלי ציפיות ברורות, ולוקח ממנו גם את מה שחשוב לו.`, ref:`תפקוד ← ציפיות · מסוגלות ← משמעות`},
+   {d:1, t:`"חשוב לי לדבר גם על העבודה. היו שני דדליינים והבריף. לא כדי להאשים, אלא כדי שנבין מה מקשה."`,
+    r:`*יונתן שותק רגע. "אני קורא משהו, ותוך שנייה הראש שלי כבר במקום אחר. זה לא קרה לי אף פעם."*`,
+    note:`הצגת את בעיית הביצועים בכנות, בלי להאשים.`, ref:`ביטחון ← אמון · תפקוד ← ציפיות`},
+   {d:-1, t:`"אני יודעת שזו תקופה לא קלה, אבל ללקוח זה לא משנה. ביום שני אני צריכה אותך איתנו במאה אחוז."`,
+    r:`*יונתן מסמיק. "אני יודע. אשב על זה בלילות אם צריך." הוא נראה מותש כבר עכשיו.*`,
+    note:`דרישה לחזור לקצב מלא מייד מגבירה לחץ. כדאי לתאם ציפיות מותאמות ולחזור בהדרגה.`, ref:`תפקוד ← ציפיות · תפקוד ← הדרגתיות`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{
+   hi:`*יונתן שותק, ואז אומר בשקט:* "אני אגיד לך את האמת. אני לא ישן כמו שצריך מאז שחזרתי. אני קורא מייל שלוש פעמים ולא קולט. אני יודע שרואים את זה. את חושבת להחליף אותי?"`,
+   mid:`*יונתן מסתכל עלייך:* "תגידי לי ישר. יש בעיה עם המשרה שלי?"`,
+   lo:`*יונתן, בטון יבש:* "אז מה, אני בדרך החוצה?"`},
+  q:`מה את עונה?`,
+  opts:[
+   {d:0, t:`"ממש לא, אל תחשוב ככה. אני מבטיחה לך שהמקום שלך פה שמור, לא משנה מה יקרה."`,
+    r:`*יונתן נרגע קצת. "באמת? ...אוקיי." הוא לא נראה משוכנע לגמרי.*`,
+    note:`הבטחת משהו שייתכן שלא תוכלי לעמוד בו.`, ref:`ביטחון ← אמון · ביטחון ← אמינות`},
+   {d:1, t:`"אני לא חושבת להחליף אותך. את היעדים לא אוכל לבטל, אבל את הדרך אליהם אפשר לשנות."`,
+    r:`*יונתן משחרר את הכתפיים. "אוקיי. את זה אני יכול לעכל."*`,
+    note:`אמרת ביושר מה אפשרי ומה לא.`, ref:`ביטחון ← אמון`},
+   {d:-1, t:`"אני שומעת שזה מדאיג אותך. בוא לא ניכנס לתרחישים, זה רק מוסיף לחץ. נתמקד במה שבידיים שלנו."`,
+    r:`*יונתן מהנהן. "בסדר." הוא מסתכל שוב על הטלפון.*`,
+    note:`עקפת את השאלה שלו. כדאי לענות על החשש ישירות ובכנות.`, ref:`ביטחון ← אמון · קשר ← לגיטימציה`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{
+   hi:`*יונתן מפהק ומתנצל: "סליחה. הלילות קשים."* לפנייך רשימת המשימות שלו: ההצגה של יום שני, קמפיין החורף, הדוח החודשי ותוכן שוטף לרשתות.`,
+   mid:`לפנייך רשימת המשימות שלו: ההצגה של יום שני, קמפיין החורף, הדוח החודשי ותוכן שוטף לרשתות. *יונתן מחכה לשמוע מה תגידי.*`,
+   lo:`לפנייך רשימת המשימות שלו: ההצגה של יום שני, קמפיין החורף, הדוח החודשי ותוכן שוטף לרשתות. *יונתן כבר חצי קם מהכיסא.*`},
+  q:`איך אתם מתכננים את השבועות הקרובים?`,
+  opts:[
+   {d:-1, t:`"הכנתי הצעה: את קמפיין החורף אעביר לנועה, ואתה תתמקד בדוח ובתוכן לרשתות. ככה יהיה לך פחות עומס."`,
+    r:`*יונתן שותק. "אם זה מה שאת חושבת." הוא נשמע נעלב.*`,
+    note:`החלטת במקומו, ולקחת ממנו את הפרויקט שהכי חשוב לו. תכנון משותף מחזיר תחושת שליטה.`, ref:`מסוגלות ← שותפות · מסוגלות ← משמעות`},
+   {d:1, t:`"בוא נעבור יחד על הרשימה ונחליט מה דחוף ומה יחכה. ומה יעזור לך עכשיו? בריף כתוב? שעות אחרות?"`,
+    r:`*יונתן מתקרב לשולחן. "בריף כתוב יעזור. ובבקרים אני הכי מפוזר, אחרי לילה בלי שינה."*`,
+    note:`תכננתם יחד והצעת לו בחירות אמיתיות.`, ref:`מסוגלות ← שותפות · מסוגלות ← שליטה · תפקוד ← הדרגתיות`},
+   {d:0, t:`"לפני שנחלק משימות, נראה לי שכדאי שתדבר קודם עם מישהו מקצועי. נחזור לתכנן כשתרגיש טוב יותר."`,
+    r:`*יונתן: "אני לא צריך פסיכולוג, אני צריך לעבוד." הוא נשמע מתגונן.*`,
+    note:`הפניה לעזרה מקצועית חשובה, אבל לא במקום תכנון העבודה עצמה.`, ref:`תפקוד ← הפניה · תפקוד ← סיוע`}
+  ]
+ },
+ {
+  who:`יונתן`,
+  intro:{
+   hi:`*כשאתם מסכמים, יונתן אומר:* "עוד משהו. בצוות שמים לב שקשה לך. דנה שאלה אותי אתמול אם הכול בסדר בבית, ולא ידעתי מה לענות." *הוא מסתכל עלייך.*`,
+   mid:`*כשאתם מסכמים, יונתן אומר:* "בצוות שמים לב שקשה לך. דנה שאלה אותי אתמול אם הכול בסדר, ולא ידעתי מה לענות."`,
+   lo:`*כשאתם מסכמים, יונתן אומר בקצרה:* "אני יודע שבצוות מדברים עליי."`},
+  q:`מה את עונה, ואיך את סוגרת את השיחה?`,
+  opts:[
+   {d:-1, t:`"לצוות אגיד שאתה בתקופה עמוסה ושיתנו לך מרחב, וככה לא ישאלו. ואם תצטרך משהו, תבוא אליי."`,
+    r:`*יונתן מהנהן: "טוב." בשבוע שאחרי, אנשים בצוות מדברים איתו בזהירות מוגזמת, והוא מרגיש שכולם יודעים משהו.*`,
+    note:`החלטת במקומו מה ייאמר לצוות, והשיחה הסתיימה בלי מועד המשך.`, ref:`קשר ← צוות · קשר ← רציפות`},
+   {d:1, t:`"מה נאמר לצוות, אם בכלל, זו החלטה שלך. אסכם במייל מה סיכמנו, ונשב שוב בחמישי לראות מה עובד."`,
+    r:`*יונתן חושב רגע. "אפשר להגיד שאני מתאפס אחרי המילואים. זה מספיק." הוא יוצא עם חצי חיוך.*`,
+    note:`השארת לו את ההחלטה מה ייאמר לצוות, סיכמת בכתב וקבעת מועד המשך.`, ref:`קשר ← צוות · תפקוד ← תיעוד · קשר ← רציפות`},
+   {d:0, t:`"זה עניין פרטי שלך, לא חייבים לומר כלום. אם דנה תשאל שוב, שתפנה אליי. והדלת שלי פתוחה תמיד."`,
+    r:`*יונתן: "אוקיי, תודה." כשהוא יוצא, הוא עוצר ליד הדלת כאילו רצה להוסיף משהו, ואז הולך.*`,
+    note:`שמרת על פרטיותו, אבל לא שאלת אותו מה הוא רוצה, ולא קבעתם סיכום ומועד המשך.`, ref:`קשר ← צוות · קשר ← רציפות · תפקוד ← תיעוד`}
+  ]
+ }
+];
+
+const ENDINGS = {
+ hi:`*ביום שני יונתן מציג את החלק שלו בהצגה: קצר מהרגיל, אבל מדויק. יש עדיין בקרים קשים, והוא עדיין מפספס לפעמים פרטים. אבל כשזה קורה, הוא בא אלייך ואומר את זה בעצמו. בשיחת ההמשך הוא מבקש לנסות יום עבודה מהבית בשבוע.*`,
+ mid:`*יונתן עובד קשה ומגיש את רוב הדברים בזמן. אבל כשאת שואלת מה שלומו, הוא עונה "בסדר" ומחליף נושא. לא ברור לך אם הוא מסתדר או רק מסתיר, ושיחת ההמשך נדחית פעמיים.*`,
+ lo:`*יונתן כמעט לא מדבר בישיבות, ובשבוע השני הוא לוקח יומיים מחלה. אלה מספרת לך שהוא שאל אותה אם היא מכירה משרות פנויות בחברות אחרות.*`
+};
+
+// ---------- STATE ----------
+let st;
+function reset(){ st = {i:0, open:0, picks:[], answered:null, order:null}; }
+function level(){ return st.open >= 3 ? "hi" : (st.open >= 0 ? "mid" : "lo"); }
+function endLevel(){ return st.open >= 5 ? "hi" : (st.open >= 1 ? "mid" : "lo"); }
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmt(s){ return esc(s).replace(/\*([^*]+)\*/g,'<span class="act">$1</span>'); }
+function shuffle(n){ const a=[...Array(n).keys()]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+const app = document.getElementById("app");
+function render(html){ app.innerHTML = '<div class="fade">'+html+'</div>'; window.scrollTo(0,0); }
+const docLink = label => `<a href="${DOC_URL}" target="_blank" rel="noopener">${label}</a>`;
+
+// ---------- SCREENS ----------
+function intro(){
+ reset();
+ render(`
+ <div class="card">
+  <h1>שיחה עם יונתן</h1>
+  <p class="sub">סימולציה: ניהול עובד שחזר ממילואים</p>
+  <p>את <b>סיגל</b>, מנהלת מחלקת השיווק בחברה למוצרי צריכה.</p>
+  <p><b>יונתן</b>, בן 27, רכז שיווק דיגיטלי בצוות שלך, חזר לפני שבוע מחמישה חודשי מילואים. לפני המילואים הוא היה מהעובדים החזקים בצוות: יצירתי, מהיר, זה שכולם פונים אליו כשצריך רעיון.</p>
+  <p>מאז שחזר, קמפיין הסתיו יצא באיחור של יומיים, כי יונתן לא הגיש את החומרים בזמן. בריף ששלחת לו על השקת מוצר חדש בוצע אחרת ממה שהתבקש. ובישיבות הוא נראה מרחף, בוהה בחלון ומבקש שיחזרו על שאלות.</p>
+  <p>את רוצה לסייע ליונתן לחזור לתפקוד מלא בעבודה, אבל לא בטוחה איך עושים זאת נכון. לפנייך יעמדו מספר דילמות שתצטרכי לבחור איך לפעול בהן. אחרי כל דילמה תראי איך יונתן מגיב. בסוף הסימולציה תקבלי משוב.</p>
+  <p>במהלך הסימולציה אפשר להיעזר ב${docLink("מסמך המסכם")}.</p>
+  <div class="goals">זכרי שניהול מודע טראומה כולל בתוכו 4 יעדים עיקריים:
+   <div class="chips"><span class="chip c1">ביטחון</span><span class="chip c2">קשר</span><span class="chip c3">מסוגלות</span><span class="chip c4">תפקוד</span></div>
+  </div>
+  <button class="btn" onclick="scene()">להתחלה</button>
+  <div class="note">זוהי סימולציה, ויונתן הוא דמות בדויה. אם הנושא מעורר אצלך קושי, אפשר לעצור בכל רגע ולפנות למרכז החוסן או לשירות הייעוץ במכללה.</div>
+ </div>`);
+}
+
+function header(pct){
+ return `<div class="progress"><span>דילמה ${st.i+1} מתוך ${SCENES.length}</span><span>${docLink("המסמך המסכם")}</span></div>
+ <div class="bar"><div style="width:${pct}%"></div></div>`;
+}
+
+function scene(){
+ const s = SCENES[st.i];
+ if(!st.order) st.order = shuffle(s.opts.length);
+ let body = header(Math.round(st.i/SCENES.length*100)) + `<div class="card">`;
+ if(st.answered===null){
+  const introText = s.intro.all || s.intro[level()];
+  body += `<div class="scene"><p>${fmt(introText)}</p></div><div class="q">${esc(s.q)}</div>`;
+  st.order.forEach(k => { body += `<button class="opt" onclick="choose(${k})">${fmt(s.opts[k].t)}</button>`; });
+ } else {
+  const o = s.opts[st.answered];
+  body += `<div class="bubble"><span class="who">${esc(s.who)}</span>${fmt(o.r)}</div>
+   <button class="btn" style="margin-top:14px" onclick="next()">${st.i===SCENES.length-1?"לסיום":"המשך"}</button>`;
+ }
+ render(body + `</div>`);
+}
+
+function choose(k){ const o=SCENES[st.i].opts[k]; st.open+=o.d; st.picks.push({...o, n:st.i+1}); st.answered=k; scene(); }
+function next(){ st.i++; st.answered=null; st.order=null; if(st.i<SCENES.length) scene(); else ending(); }
+
+function ending(){
+ render(`
+ <div class="progress"><span>סוף השיחה</span></div>
+ <div class="bar"><div style="width:100%"></div></div>
+ <div class="card">
+  <h2>שבועיים אחרי השיחה</h2>
+  <p>${fmt(ENDINGS[endLevel()])}</p>
+  <button class="btn" onclick="feedback()">למשוב</button>
+ </div>`);
+}
+
+function feedback(){
+ const goods = st.picks.filter(p=>p.d>0).slice(0,3);
+ const misses = st.picks.filter(p=>p.d<0).concat(st.picks.filter(p=>p.d===0)).slice(0,3).sort((a,b)=>a.n-b.n);
+ const li = arr => arr.map(p=>`<li><span class="dn">דילמה ${p.n}:</span> ${esc(p.note)} <span class="ref">(${esc(p.ref)})</span></li>`).join("");
+ const today = new Date().toLocaleDateString("he-IL");
+ render(`
+ <div class="card fb">
+  <div class="fbhead">
+   <h2>משוב: שיחה עם יונתן</h2>
+   <label class="namefield">שם: <input id="nm" type="text" placeholder="שם מלא" autocomplete="name"></label>
+  </div>
+  <div class="ending"><b>שבועיים אחרי השיחה</b>${fmt(ENDINGS[endLevel()])}</div>
+  <div class="good"><h3>מה עשית טוב</h3>
+   <ul>${goods.length ? li(goods) : `<li>הפעם אף בחירה לא קירבה את יונתן באמת. כדאי לנסות שוב ולראות מה משתנה.</li>`}</ul>
+  </div>
+  <div class="next"><h3>לפעם הבאה</h3>
+   <ul>${misses.length ? li(misses) : `<li>בכל הדילמות בחרת בדרך המומלצת.</li>`}</ul>
+  </div>
+  <div class="fbfoot"><span>ההפניות הן למסמך המסכם (יעד ← מטרה)</span><span>${today}</span></div>
+ </div>
+ <p class="shot">כתבו את שמכם, צלמו את המסך והעלו את התמונה למודל.</p>
+ <button class="btn ghost" onclick="intro()">לנסות שוב</button>`);
+}
+
+intro();
+</script>
+</body>
+</html>
